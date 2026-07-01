@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* ===== ESTILOS EXATAMENTE COMO ESTAVAM ===== */
+        /* ===== ESTILOS EXATAMENTE COMO ESTAVAM (com adição do switch) ===== */
         :root {
             --bg: #453C67;
             --card: #3A3159;
@@ -691,6 +691,41 @@
         .fill.green { background: var(--income); }
         .fill.red { background: var(--expense); }
 
+        /* Switch toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--border);
+            transition: .3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--accent);
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
         .settings-card input,
         .settings-card select,
         .settings-card textarea {
@@ -981,7 +1016,7 @@
                 <a onclick="navigate('configuracoes')" data-nav="configuracoes"><i data-lucide="settings"></i> Configurações</a>
             </nav>
             <div class="sidebar-footer">
-                <span>v3.0 · Dashboard+Plan</span>
+                <span>v3.1 · Dashboard+Switch</span>
                 <button class="theme-toggle" onclick="toggleTheme()"><i data-lucide="sun-moon" style="width:18px;height:18px;"></i></button>
             </div>
         </aside>
@@ -1107,6 +1142,17 @@
                     }
                     if (!appState.plans) appState.plans = [];
                     if (appState.sheetApiUrl === undefined) appState.sheetApiUrl = '';
+
+                    // Migração: garante que todas as transações tenham countInDailyLimit
+                    appState.transactions.forEach(t => {
+                        if (t.countInDailyLimit === undefined) {
+                            // se tinha excludeFromDailyLimit, inverte; senão, padrão true
+                            t.countInDailyLimit = t.hasOwnProperty('excludeFromDailyLimit') ? !t.excludeFromDailyLimit : true;
+                        }
+                        // remove propriedade antiga se existir
+                        delete t.excludeFromDailyLimit;
+                    });
+
                     appState.shoppingLists.forEach(list => {
                         list.categories.forEach(cat => { if (!cat.checked) cat.checked = []; });
                     });
@@ -1123,7 +1169,7 @@
         function getDailyLimit() { return appState.dailyLimits[getDayType(getTodayDate())] || 0; }
 
         function getTodayExpenses() {
-            return appState.transactions.filter(t => t.type === 'expense' && t.date === getTodayDate() && t.status !== 'cancelled' && !t.excludeFromDailyLimit)
+            return appState.transactions.filter(t => t.type === 'expense' && t.date === getTodayDate() && t.status !== 'cancelled' && t.countInDailyLimit !== false)
                 .reduce((s, t) => s + Number(t.amount), 0);
         }
 
@@ -1143,7 +1189,7 @@
 
         function getWeeklyExpenses() {
             const weekDays = getWeekRange();
-            return appState.transactions.filter(t => t.type === 'expense' && weekDays.includes(t.date) && t.status !== 'cancelled' && !t.excludeFromDailyLimit)
+            return appState.transactions.filter(t => t.type === 'expense' && weekDays.includes(t.date) && t.status !== 'cancelled' && t.countInDailyLimit !== false)
                 .reduce((s, t) => s + Number(t.amount), 0);
         }
 
@@ -1336,7 +1382,7 @@
               <div class="transaction-list">${recent.map(t => `
                 <div class="transaction-item">
                   <div class="transaction-icon">${t.type === 'income' ? '↓' : '↑'}</div>
-                  <div class="transaction-info"><div class="category">${t.category}</div><div class="meta">${formatDate(t.date)} · ${getAccountName(t.accountId)} ${t.excludeFromDailyLimit ? '· Fora do limite' : ''}</div></div>
+                  <div class="transaction-info"><div class="category">${t.category}</div><div class="meta">${formatDate(t.date)} · ${getAccountName(t.accountId)} ${t.countInDailyLimit === false ? '· Não conta no limite' : ''}</div></div>
                   <div class="transaction-amount ${t.type === 'income' ? 'positive' : 'negative'}">${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}</div>
                 </div>`).join('') || '<p style="color:var(--text-secondary);padding:12px;">Nenhum lançamento</p>'}</div>
             </div>`;
@@ -1505,11 +1551,11 @@
             });
         }
 
-        // ==================== TRANSAÇÕES (checkbox simples) ====================
+        // ==================== TRANSAÇÕES (switch para limite diário) ====================
         function renderTransactionList(type) {
             const items = appState.transactions.filter(t => t.type === type).sort((a, b) => b.date.localeCompare(a.date));
             return `<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;"><button class="btn btn-primary" onclick="openTransactionModal('${type}')"><i data-lucide="plus"></i> Novo</button><input type="text" placeholder="Buscar..." oninput="filterTransactions(this.value,'${type}')" style="background:var(--card);border:1px solid var(--border);border-radius:50px;padding:8px 16px;color:var(--text);width:180px;max-width:100%;min-height:40px;font-family:var(--font);"></div>
-            <div class="transaction-list" id="transList-${type}">${items.map(t => `<div class="transaction-item" data-search="${t.category} ${t.description||''}"><div class="transaction-icon">${type==='income'?'↓':'↑'}</div><div class="transaction-info"><div class="category">${t.category} ${t.subcategory||''}</div><div class="meta">${formatDate(t.date)} · ${getAccountName(t.accountId)} ${t.excludeFromDailyLimit ? '· Fora do limite' : ''}</div></div><div class="transaction-amount ${type==='income'?'positive':'negative'}">${formatMoney(t.amount)}</div><div style="display:flex;gap:4px;"><button class="btn btn-outline btn-sm" onclick="editTransaction('${t.id}')"><i data-lucide="pencil" style="width:14px;"></i></button> <button class="btn btn-danger btn-sm" onclick="deleteTransaction('${t.id}')"><i data-lucide="trash-2" style="width:14px;"></i></button></div></div>`).join('') || '<p style="color:var(--text-secondary);padding:16px;">Nenhum registro</p>'}</div>`;
+            <div class="transaction-list" id="transList-${type}">${items.map(t => `<div class="transaction-item" data-search="${t.category} ${t.description||''}"><div class="transaction-icon">${type==='income'?'↓':'↑'}</div><div class="transaction-info"><div class="category">${t.category} ${t.subcategory||''}</div><div class="meta">${formatDate(t.date)} · ${getAccountName(t.accountId)} ${t.countInDailyLimit === false ? '· Não conta no limite' : ''}</div></div><div class="transaction-amount ${type==='income'?'positive':'negative'}">${formatMoney(t.amount)}</div><div style="display:flex;gap:4px;"><button class="btn btn-outline btn-sm" onclick="editTransaction('${t.id}')"><i data-lucide="pencil" style="width:14px;"></i></button> <button class="btn btn-danger btn-sm" onclick="deleteTransaction('${t.id}')"><i data-lucide="trash-2" style="width:14px;"></i></button></div></div>`).join('') || '<p style="color:var(--text-secondary);padding:16px;">Nenhum registro</p>'}</div>`;
         }
 
         function filterTransactions(query, type) {
@@ -1524,13 +1570,23 @@
             const accOpts = appState.accounts.map(a => `<option value="${a.id}" ${existing&&existing.accountId===a.id?'selected':''}>${a.name}</option>`).join('') || '<option value="">Nenhuma conta</option>';
             const cardOpts = type === 'expense' ? `
             <div class="form-group"><label>Cartão</label><select id="modalCard"><option value="">Nenhum</option>${appState.creditCards.map(c=>`<option value="${c.id}" ${existing&&existing.cardId===c.id?'selected':''}>${c.name}</option>`).join('')}</select></div>` : '';
-            // Checkbox simples, sem confirmação extra
-            const excludeLimitCheck = type === 'expense' ? `
+
+            // Switch do limite diário (apenas para despesas)
+            const limitSwitch = type === 'expense' ? `
             <div class="form-group">
-              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                <input type="checkbox" id="modalExcludeLimit" ${existing&&existing.excludeFromDailyLimit?'checked':''}> Excluir do limite diário
-              </label>
+              <label>Contabilizar no limite diário?</label>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
+                <label class="switch">
+                  <input type="checkbox" id="modalCountLimit" ${existing ? (existing.countInDailyLimit !== false ? 'checked' : '') : 'checked'}>
+                  <span class="slider round"></span>
+                </label>
+                <span id="limitHelpText" style="font-size:0.8em;color:var(--text-secondary);">Sim, essa despesa conta no limite do dia.</span>
+              </div>
+              <p style="font-size:0.7em;color:var(--text-secondary);margin-top:8px;line-height:1.4;">
+                💡 Desligue para: fatura do cartão, transferências, investimentos, empréstimos, ajustes financeiros.
+              </p>
             </div>` : '';
+
             const body = `<input type="hidden" id="modalEditId" value="${editId||''}"><input type="hidden" id="modalType" value="${type}">
             <div class="form-group"><label>Valor</label><input type="number" id="modalAmount" step="0.01" value="${existing?existing.amount:''}" required></div>
             <div class="row-flex"><div class="form-group"><label>Categoria</label><select id="modalCategory">${cats.map(c=>`<option ${existing&&existing.category===c?'selected':''}>${c}</option>`).join('')}</select></div><div class="form-group"><label>Subcategoria</label><input type="text" id="modalSubcategory" value="${existing?existing.subcategory||'':''}"></div></div>
@@ -1538,12 +1594,13 @@
             <div class="form-group"><label>Conta</label><select id="modalAccount">${accOpts}</select></div>${cardOpts}
             <div class="form-group"><label>Descrição</label><input type="text" id="modalDescription" value="${existing?existing.description||'':''}"></div>
             <div class="form-group"><label><input type="checkbox" id="modalRecurring" ${existing&&existing.recurring?'checked':''}> Recorrente</label></div>
-            ${excludeLimitCheck}`;
+            ${limitSwitch}`;
 
             openModal(type === 'income' ? 'Receita' : 'Despesa', body, () => {
                 const amt = parseFloat(document.getElementById('modalAmount').value);
                 if (!amt || amt <= 0) { showToast('Valor inválido', 'error'); return; }
-                const excludeChecked = document.getElementById('modalExcludeLimit')?.checked || false;
+                const countLimitEl = document.getElementById('modalCountLimit');
+                const countLimit = countLimitEl ? countLimitEl.checked : true;
 
                 const data = {
                     id: editId || generateId(),
@@ -1557,7 +1614,7 @@
                     recurring: document.getElementById('modalRecurring').checked,
                     cardId: type === 'expense' ? (document.getElementById('modalCard')?.value || null) : null,
                     status: 'paid',
-                    excludeFromDailyLimit: excludeChecked
+                    countInDailyLimit: countLimit
                 };
                 if (editId) { const idx = appState.transactions.findIndex(t => t.id === editId); if (idx >= 0) appState.transactions[idx] = data; }
                 else appState.transactions.push(data);
@@ -1565,13 +1622,26 @@
                 closeModal();
                 navigate(currentSection);
                 showToast('Salvo', 'success');
-                if (type === 'expense' && !data.excludeFromDailyLimit) {
+                if (type === 'expense' && data.countInDailyLimit) {
                     const todayExp = getTodayExpenses();
                     const limit = getDailyLimit();
                     if (limit > 0 && todayExp > limit) showToast('⚠️ Limite diário excedido!', 'warning');
                     else if (limit > 0 && todayExp < limit) celebrate();
                 }
             });
+
+            // Adiciona listener para mudar o texto de ajuda dinamicamente
+            setTimeout(() => {
+                const switchEl = document.getElementById('modalCountLimit');
+                const helpText = document.getElementById('limitHelpText');
+                if (switchEl && helpText) {
+                    const updateHelp = () => {
+                        helpText.textContent = switchEl.checked ? 'Sim, essa despesa conta no limite do dia.' : 'Não, essa despesa NÃO conta no limite do dia.';
+                    };
+                    switchEl.addEventListener('change', updateHelp);
+                    updateHelp();
+                }
+            }, 100);
         }
 
         function editTransaction(id) { const t = appState.transactions.find(x => x.id === id); if (t) openTransactionModal(t.type, id); }
@@ -1596,7 +1666,7 @@
         function openBillModal(editId = null) { const e = editId ? appState.bills.find(b => b.id === editId) : null; const body = `<input type="hidden" id="billEditId" value="${editId||''}"><div class="form-group"><label>Nome</label><input type="text" id="billName" value="${e?e.name:''}"></div><div class="row-flex"><div class="form-group"><label>Valor</label><input type="number" id="billAmount" value="${e?e.amount:''}"></div><div class="form-group"><label>Vencimento</label><input type="date" id="billDueDate" value="${e?e.dueDate:''}"></div></div>`;
             openModal('Conta a Pagar', body, () => { const n = document.getElementById('billName').value.trim(); if (!n) return; const d = { id: editId || generateId(), name: n, amount: parseFloat(document.getElementById('billAmount').value) || 0, dueDate: document.getElementById('billDueDate').value, status: e ? e.status : 'pending' }; if (editId) { const i = appState.bills.findIndex(b => b.id === editId); if (i >= 0) appState.bills[i] = d; } else appState.bills.push(d); saveState(); closeModal(); navigate('contasPagar'); }); }
         function payBill(id) { const bill = appState.bills.find(b => b.id === id); if (!bill || bill.status === 'paid') return; const body = `<p>Pagar <b>${bill.name}</b> - ${formatMoney(bill.amount)}</p><div class="form-group"><label>Conta</label><select id="payAccount">${appState.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select></div><div class="form-group"><label>Data</label><input type="date" id="payDate" value="${getTodayDate()}"></div>`;
-            openModal('Pagamento', body, () => { const accId = document.getElementById('payAccount').value; bill.status = 'paid'; appState.transactions.push({ id: generateId(), type: 'expense', amount: bill.amount, category: 'Contas', subcategory: bill.name, date: document.getElementById('payDate').value, accountId: accId, description: 'Pagamento: ' + bill.name, recurring: false, cardId: null, status: 'paid' }); const acc = appState.accounts.find(a => a.id === accId); if (acc) acc.currentBalance -= bill.amount; saveState(); closeModal(); navigate('contasPagar'); }); }
+            openModal('Pagamento', body, () => { const accId = document.getElementById('payAccount').value; bill.status = 'paid'; appState.transactions.push({ id: generateId(), type: 'expense', amount: bill.amount, category: 'Contas', subcategory: bill.name, date: document.getElementById('payDate').value, accountId: accId, description: 'Pagamento: ' + bill.name, recurring: false, cardId: null, status: 'paid', countInDailyLimit: false }); const acc = appState.accounts.find(a => a.id === accId); if (acc) acc.currentBalance -= bill.amount; saveState(); closeModal(); navigate('contasPagar'); }); }
         function editBill(id) { openBillModal(id); }
         function deleteBill(id) { confirmDialog('Excluir?', () => { appState.bills = appState.bills.filter(b => b.id !== id); saveState(); navigate('contasPagar'); }); }
 
@@ -1744,7 +1814,6 @@
             if (num > 0 && plan.status === 'pending') plan.status = 'paid';
             else if (num === 0 && plan.status === 'paid') plan.status = 'pending';
             saveState();
-            // Atualiza a view sem recarregar tudo
             navigate('planejamento');
         }
 
@@ -1832,7 +1901,7 @@
         document.getElementById('loginPin').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
         window.addEventListener('resize', () => { if (!isMobile()) closeSidebar(); });
         lucide.createIcons();
-        console.log('🚀 FinanceHub v3.0 · Dashboard+Plan+Sheet · Pronto!');
+        console.log('🚀 FinanceHub v3.1 · Switch Limite Diário · Pronto!');
     </script>
 </body>
 </html>
