@@ -1013,7 +1013,6 @@
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
         <aside class="sidebar" id="sidebar">
             <div class="logo"><img src="https://res.cloudinary.com/duu9q94cf/image/upload/quero-que-voc%C3%AA-crie-uma-logo--para-o-aplicativo-we_uzwrya.png" alt="FinanceHub"><span>FinanceHub</span></div>
-            <!-- Perfil do usuário na sidebar -->
             <div class="sidebar-profile" id="sidebarProfile" onclick="navigate('configuracoes')" title="Editar perfil">
                 <div class="avatar" id="sidebarAvatar"><span id="sidebarInitials">U</span></div>
                 <div class="profile-info">
@@ -1033,13 +1032,14 @@
                 <a onclick="navigate('orcamento')" data-nav="orcamento"><i data-lucide="target"></i> Orçamento</a>
                 <a onclick="navigate('metas')" data-nav="metas"><i data-lucide="flag"></i> Metas</a>
                 <a onclick="navigate('calendario')" data-nav="calendario"><i data-lucide="calendar"></i> Calendário</a>
-                <!-- Nova aba Investimentos -->
                 <a onclick="navigate('investimentos')" data-nav="investimentos"><i data-lucide="trending-up"></i> Investimentos</a>
+                <!-- Nova aba Declarar Imposto de Renda -->
+                <a onclick="navigate('declararir')" data-nav="declararir"><i data-lucide="file-text"></i> Declarar IR</a>
                 <a onclick="navigate('relatorios')" data-nav="relatorios"><i data-lucide="bar-chart-3"></i> Relatórios</a>
                 <a onclick="navigate('configuracoes')" data-nav="configuracoes"><i data-lucide="settings"></i> Configurações</a>
             </nav>
             <div class="sidebar-footer">
-                <span>v3.2 · Perfil+Backup</span>
+                <span>v3.3 · IR</span>
                 <button class="theme-toggle" onclick="toggleTheme()"><i data-lucide="sun-moon" style="width:18px;height:18px;"></i></button>
             </div>
         </aside>
@@ -1068,14 +1068,12 @@
     <div id="toastContainer"></div>
     <div id="modalContainer"></div>
 
-    <!-- Input oculto para importação de backup -->
     <input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="handleBackupImport(event)">
 
     <script>
         // ==================== STATE ====================
         const DEFAULT_PIN = '1234';
 
-        // Categorias e subcategorias de investimentos
         const INVEST_CATEGORIES = {
             "Renda Fixa": ["Reserva de Emergência", "Tesouro Direto", "Tesouro Selic", "Tesouro IPCA+", "Tesouro Prefixado", "CDB", "LCI", "LCA", "LC", "Debêntures", "Debêntures Incentivadas", "CRI", "CRA", "Poupança", "Fundos DI", "Fundos de Renda Fixa"],
             "Renda Variável": ["Ações", "ETFs", "BDRs", "Fundos de Ações", "Fundos Multimercado", "Contratos Futuros", "Opções", "Minicontratos", "COE"],
@@ -1087,6 +1085,16 @@
             "Previdência Privada": ["PGBL", "VGBL"],
             "Commodities": ["Ouro", "Prata", "Petróleo", "Café", "Soja", "Milho", "Boi gordo"],
             "Investimentos Alternativos": ["Startups", "Private Equity", "Venture Capital", "Obras de arte", "Vinhos", "Colecionáveis", "Participação em empresas"]
+        };
+
+        // Regras de isenção e tributação para IR
+        const IR_RULES = {
+            isento: ["LCI", "LCA", "CRI", "CRA", "Debêntures Incentivadas", "Poupança", "Fundos Imobiliários (FIIs)"],
+            tributavelRF: ["CDB", "LC", "Tesouro Selic", "Tesouro IPCA+", "Tesouro Prefixado", "Tesouro Direto", "Fundos DI", "Fundos de Renda Fixa", "Debêntures"],
+            acoes: ["Ações", "ETFs", "BDRs", "Opções", "Minicontratos", "Contratos Futuros"],
+            cripto: ["Bitcoin", "Ethereum", "Solana", "Stablecoins", "Tokens DeFi", "NFTs"],
+            imobiliario: ["Compra de imóveis", "Terrenos", "Imóveis para aluguel", "Lajes corporativas", "Galpões logísticos"],
+            previdencia: ["PGBL", "VGBL"]
         };
 
         let appState = {
@@ -1103,13 +1111,14 @@
             transfers: [],
             dailyLimits: { weekday: 0, saturday: 0, sunday: 0 },
             monthlyBudget: 0,
-            shoppingLists: [], // não usado na interface, mantido para compatibilidade
+            shoppingLists: [],
             customCategories: {
                 expense: ['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Compras', 'Assinaturas', 'Pets', 'Impostos', 'Outros'],
                 income: ['Salário', 'Freelance', 'Comissão', 'Venda', 'Presente', 'Outros']
             },
             plans: [],
             investments: [],
+            capitalGains: [], // {id, investmentId, date, sellValue, profit, taxRate}
             sheetApiUrl: ''
         };
 
@@ -1139,7 +1148,8 @@
                         dailyLimits: appState.dailyLimits,
                         monthlyBudget: appState.monthlyBudget,
                         plans: appState.plans,
-                        investments: appState.investments
+                        investments: appState.investments,
+                        capitalGains: appState.capitalGains
                     })
                 }).catch(() => {});
             } catch (e) {}
@@ -1165,6 +1175,7 @@
                     if (!appState.shoppingLists) appState.shoppingLists = [];
                     if (!appState.plans) appState.plans = [];
                     if (!appState.investments) appState.investments = [];
+                    if (!appState.capitalGains) appState.capitalGains = [];
                     if (appState.sheetApiUrl === undefined) appState.sheetApiUrl = '';
 
                     appState.transactions.forEach(t => {
@@ -1333,7 +1344,8 @@
                 dashboard: 'Visão Geral', receitas: 'Receitas', despesas: 'Despesas', contas: 'Contas',
                 cartoes: 'Cartões', contasPagar: 'Contas a Pagar', transferencias: 'Transferências',
                 orcamento: 'Orçamento', metas: 'Metas', calendario: 'Calendário',
-                investimentos: 'Investimentos', relatorios: 'Relatórios', configuracoes: 'Configurações',
+                investimentos: 'Investimentos', declararir: 'Declarar Imposto de Renda',
+                relatorios: 'Relatórios', configuracoes: 'Configurações',
                 planejamento: 'Planejamento'
             };
             document.getElementById('pageTitle').textContent = titles[section] || section;
@@ -1362,6 +1374,7 @@
                 case 'metas': html = renderGoals(); break;
                 case 'calendario': html = renderCalendar(); break;
                 case 'investimentos': html = renderInvestimentos(); break;
+                case 'declararir': html = renderDeclararIR(); break;
                 case 'relatorios': html = renderReports(); break;
                 case 'configuracoes': html = renderSettings(); break;
                 default: html = renderDashboard();
@@ -1509,13 +1522,10 @@
             });
             const profit = totalCurrent - totalInvested;
             const grouped = {};
-            const categoryTotals = {};
             investments.forEach(inv => {
                 const cat = inv.category || 'Outros';
                 if (!grouped[cat]) grouped[cat] = [];
                 grouped[cat].push(inv);
-                const q = inv.quantity || 0;
-                categoryTotals[cat] = (categoryTotals[cat] || 0) + q * (inv.currentPrice || 0);
             });
             let html = `
             <div class="grid-cards" style="margin-bottom:20px;">
@@ -1649,13 +1659,204 @@
         }
 
         function editInvestment(id) { openInvestmentModal(id); }
-
         function deleteInvestment(id) {
             confirmDialog('Excluir investimento?', () => {
                 appState.investments = appState.investments.filter(i => i.id !== id);
                 saveState();
                 navigate('investimentos');
             });
+        }
+
+        // ==================== DECLARAR IMPOSTO DE RENDA ====================
+        function getInvestmentTaxInfo(inv) {
+            const sub = inv.subcategory || '';
+            if (IR_RULES.isento.includes(sub)) return 'isento';
+            if (IR_RULES.tributavelRF.includes(sub)) return 'tributavel_rf';
+            if (IR_RULES.acoes.includes(sub)) return 'acoes';
+            if (IR_RULES.cripto.includes(sub)) return 'cripto';
+            if (IR_RULES.imobiliario.includes(sub)) return 'imobiliario';
+            if (IR_RULES.previdencia.includes(sub)) return 'previdencia';
+            // fallback heuristics
+            if (sub.includes('Ações') || sub.includes('ETFs') || sub.includes('BDRs') || sub.includes('Opções')) return 'acoes';
+            if (sub.includes('FIIs') || sub.includes('Imobiliários')) return 'isento';
+            return 'tributavel_rf';
+        }
+
+        function renderDeclararIR() {
+            const investments = appState.investments || [];
+            const capitalGains = appState.capitalGains || [];
+            let totalIsento = 0, totalTributavelRF = 0, totalAcoes = 0, totalCripto = 0, totalImobiliario = 0, totalPrevidencia = 0, totalOutros = 0;
+            investments.forEach(inv => {
+                const q = inv.quantity || 0;
+                const val = q * (inv.currentPrice || 0);
+                const taxType = getInvestmentTaxInfo(inv);
+                if (taxType === 'isento') totalIsento += val;
+                else if (taxType === 'tributavel_rf') totalTributavelRF += val;
+                else if (taxType === 'acoes') totalAcoes += val;
+                else if (taxType === 'cripto') totalCripto += val;
+                else if (taxType === 'imobiliario') totalImobiliario += val;
+                else if (taxType === 'previdencia') totalPrevidencia += val;
+                else totalOutros += val;
+            });
+            const totalAtivos = totalIsento + totalTributavelRF + totalAcoes + totalCripto + totalImobiliario + totalPrevidencia + totalOutros;
+            const totalGanhos = capitalGains.reduce((s, g) => s + (g.profit || 0), 0);
+            const impostoDevido = capitalGains.reduce((s, g) => s + (g.profit || 0) * ((g.taxRate || 0) / 100), 0);
+
+            let html = `
+            <div class="grid-cards" style="margin-bottom:20px;">
+              <div class="card"><div class="card-label"><i data-lucide="briefcase" style="width:14px;"></i> Total de Ativos</div><div class="card-value">${formatMoney(totalAtivos)}</div></div>
+              <div class="card"><div class="card-label"><i data-lucide="check-circle" style="width:14px;"></i> Ativos Isentos</div><div class="card-value income-text">${formatMoney(totalIsento)}</div></div>
+              <div class="card"><div class="card-label"><i data-lucide="alert-circle" style="width:14px;"></i> Ganhos de Capital (ano)</div><div class="card-value">${formatMoney(totalGanhos)}</div></div>
+              <div class="card" style="border: 2px solid var(--accent);"><div class="card-label"><i data-lucide="calculator" style="width:14px;"></i> Imposto Devido (ganhos)</div><div class="card-value ${impostoDevido > 0 ? 'expense-text' : 'income-text'}">${formatMoney(impostoDevido)}</div></div>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="openCapitalGainModal()"><i data-lucide="plus"></i> Registrar Ganho de Capital</button>
+              <button class="btn btn-outline" onclick="exportIRReport()"><i data-lucide="download"></i> Exportar Resumo IR</button>
+            </div>`;
+
+            // Lista de investimentos com classificação IR
+            html += `<div class="card" style="margin-bottom:20px;"><div class="card-label"><i data-lucide="list" style="width:14px;"></i> Investimentos e Classificação Fiscal</div>`;
+            if (investments.length === 0) {
+                html += `<p style="color:var(--text-secondary);">Nenhum investimento cadastrado. Cadastre em Investimentos primeiro.</p>`;
+            } else {
+                html += `<div class="transaction-list">`;
+                investments.forEach(inv => {
+                    const q = inv.quantity || 0;
+                    const val = q * (inv.currentPrice || 0);
+                    const taxType = getInvestmentTaxInfo(inv);
+                    let taxLabel = '', taxColor = '';
+                    switch (taxType) {
+                        case 'isento': taxLabel = 'Isento'; taxColor = 'var(--income)'; break;
+                        case 'tributavel_rf': taxLabel = 'Tributável (RF)'; taxColor = '#F2F7A1'; break;
+                        case 'acoes': taxLabel = 'Ações/Variável'; taxColor = '#3B82F6'; break;
+                        case 'cripto': taxLabel = 'Criptomoedas'; taxColor = '#F59E0B'; break;
+                        case 'imobiliario': taxLabel = 'Imobiliário'; taxColor = '#10B981'; break;
+                        case 'previdencia': taxLabel = 'Previdência'; taxColor = '#EC4899'; break;
+                        default: taxLabel = 'Outros'; taxColor = 'var(--text-secondary)';
+                    }
+                    html += `<div class="transaction-item">
+                        <div class="transaction-info"><div class="category">${inv.subcategory} (${inv.category})</div><div class="meta">Valor atual: ${formatMoney(val)}</div></div>
+                        <span class="badge" style="background:rgba(255,255,255,0.1);color:${taxColor};">${taxLabel}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            html += `</div>`;
+
+            // Ganhos de capital registrados
+            if (capitalGains.length > 0) {
+                html += `<div class="card" style="margin-bottom:20px;"><div class="card-label"><i data-lucide="dollar-sign" style="width:14px;"></i> Ganhos de Capital Registrados</div><div class="transaction-list">`;
+                capitalGains.forEach(g => {
+                    const inv = appState.investments.find(i => i.id === g.investmentId);
+                    const name = inv ? inv.subcategory : 'Ativo';
+                    html += `<div class="transaction-item">
+                        <div class="transaction-icon">📈</div>
+                        <div class="transaction-info"><div class="category">${name}</div><div class="meta">${formatDate(g.date)} · Venda: ${formatMoney(g.sellValue)} · Lucro: ${formatMoney(g.profit)}</div></div>
+                        <div>IR: ${formatMoney(g.profit * (g.taxRate/100))} (${g.taxRate}%)</div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteCapitalGain('${g.id}')"><i data-lucide="trash-2" style="width:14px;"></i></button>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+
+            // Guia rápido
+            html += `
+            <div class="card" style="margin-bottom:20px;">
+              <div class="card-label"><i data-lucide="book-open" style="width:14px;"></i> Guia para Declaração do IR</div>
+              <div style="font-size:0.8em;color:var(--text-secondary);line-height:1.6;">
+                <p><strong>1. Bens e Direitos:</strong> Declare seus investimentos pelo valor de aquisição (não pelo valor atual). Informe cada ativo na ficha "Bens e Direitos" com o código correspondente (ex: 41 - Ações, 45 - Fundos, etc.).</p>
+                <p><strong>2. Rendimentos Isentos:</strong> LCI, LCA, CRI, CRA, Poupança e dividendos são isentos. Declare na ficha "Rendimentos Isentos e Não Tributáveis".</p>
+                <p><strong>3. Ganhos de Capital:</strong> Vendas de ações acima de R$20 mil/mês, criptomoedas acima de R$35 mil/mês, e qualquer venda com lucro em renda fixa devem ser informadas. Use o GCAP mensal para ações e declare os ganhos na ficha "Renda Variável".</p>
+                <p><strong>4. Previdência Privada:</strong> Contribuições ao PGBL podem ser deduzidas até 12% da renda tributável. Informe o saldo em 31/12.</p>
+                <p><strong>5. Criptomoedas:</strong> Declare na ficha "Bens e Direitos" (código 8) e informe os ganhos de capital na ficha "Ganhos de Capital".</p>
+                <p><strong>6. Rendimentos de Renda Fixa:</strong> O IR é retido na fonte. Informe os valores brutos e o IR retido na ficha "Rendimentos Sujeitos à Tributação Exclusiva".</p>
+              </div>
+            </div>`;
+
+            return html;
+        }
+
+        function openCapitalGainModal() {
+            const invOptions = appState.investments.map(i => {
+                const taxType = getInvestmentTaxInfo(i);
+                let defaultTax = 15;
+                if (taxType === 'tributavel_rf') defaultTax = 20; // tabela regressiva, mas simplificado
+                else if (taxType === 'acoes') defaultTax = 15;
+                else if (taxType === 'cripto') defaultTax = 15;
+                else if (taxType === 'imobiliario') defaultTax = 15;
+                return `<option value="${i.id}" data-tax="${defaultTax}">${i.subcategory} (${i.category})</option>`;
+            }).join('') || '<option value="">Nenhum investimento</option>';
+
+            const body = `
+            <div class="form-group"><label>Ativo</label><select id="cgInvestment" onchange="updateCGTax()">${invOptions}</select></div>
+            <div class="row-flex">
+              <div class="form-group"><label>Data da Venda</label><input type="date" id="cgDate" value="${getTodayDate()}"></div>
+              <div class="form-group"><label>Valor Total Vendido (R$)</label><input type="number" id="cgSellValue" step="0.01"></div>
+            </div>
+            <div class="row-flex">
+              <div class="form-group"><label>Lucro (R$)</label><input type="number" id="cgProfit" step="0.01"></div>
+              <div class="form-group"><label>Alíquota IR (%)</label><input type="number" id="cgTaxRate" value="15" step="0.1"></div>
+            </div>
+            <p style="font-size:0.7em;color:var(--text-secondary);">A alíquota pode variar: 15% para ações (venda >20k/mês), 20% day trade, 15%-22,5% renda fixa (tabela regressiva), 15% cripto (>35k/mês).</p>`;
+            openModal('Ganho de Capital', body, () => {
+                const invId = document.getElementById('cgInvestment').value;
+                const profit = parseFloat(document.getElementById('cgProfit').value) || 0;
+                if (!invId || profit <= 0) { showToast('Preencha todos os campos', 'error'); return; }
+                const gain = {
+                    id: generateId(),
+                    investmentId: invId,
+                    date: document.getElementById('cgDate').value,
+                    sellValue: parseFloat(document.getElementById('cgSellValue').value) || 0,
+                    profit: profit,
+                    taxRate: parseFloat(document.getElementById('cgTaxRate').value) || 15
+                };
+                appState.capitalGains.push(gain);
+                saveState();
+                closeModal();
+                navigate('declararir');
+                showToast('Ganho registrado!', 'success');
+            });
+        }
+
+        function updateCGTax() {
+            const sel = document.getElementById('cgInvestment');
+            if (!sel) return;
+            const selected = sel.options[sel.selectedIndex];
+            const tax = selected?.getAttribute('data-tax') || 15;
+            const taxInput = document.getElementById('cgTaxRate');
+            if (taxInput) taxInput.value = tax;
+        }
+
+        function deleteCapitalGain(id) {
+            confirmDialog('Excluir ganho de capital?', () => {
+                appState.capitalGains = appState.capitalGains.filter(g => g.id !== id);
+                saveState();
+                navigate('declararir');
+            });
+        }
+
+        function exportIRReport() {
+            const investments = appState.investments || [];
+            const capitalGains = appState.capitalGains || [];
+            let report = 'RESUMO PARA DECLARAÇÃO DE IMPOSTO DE RENDA\n';
+            report += '========================================\n\n';
+            report += 'BENS E DIREITOS (valor de aquisição - use os preços médios como referência):\n';
+            investments.forEach(inv => {
+                const q = inv.quantity || 0;
+                const custo = q * (inv.averagePrice || 0);
+                report += `- ${inv.subcategory} (${inv.category}): Quantidade ${q}, Custo total ${formatMoney(custo)}\n`;
+            });
+            report += '\nGANHOS DE CAPITAL:\n';
+            capitalGains.forEach(g => {
+                const inv = investments.find(i => i.id === g.investmentId);
+                report += `- ${inv?.subcategory||'Ativo'}: Data ${g.date}, Vendido ${formatMoney(g.sellValue)}, Lucro ${formatMoney(g.profit)}, IR (${g.taxRate}%) ${formatMoney(g.profit * g.taxRate / 100)}\n`;
+            });
+            const blob = new Blob([report], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'resumo_ir_financehub.txt';
+            a.click();
+            showToast('Resumo exportado!', 'success');
         }
 
         // ==================== TRANSAÇÕES ====================
@@ -2115,7 +2316,7 @@
         window.addEventListener('resize', () => { if (!isMobile()) closeSidebar(); });
         lucide.createIcons();
         updateSidebarProfile();
-        console.log('🚀 FinanceHub v3.2 · Investimentos adicionado');
+        console.log('🚀 FinanceHub v3.3 · IR adicionado');
     </script>
 </body>
 </html>
