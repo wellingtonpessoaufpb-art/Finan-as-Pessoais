@@ -1442,6 +1442,12 @@
             const totalExpense = monthTrans.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
             const balance = totalIncome - totalExpense;
             const totalBalance = appState.accounts.reduce((s, a) => s + Number(a.currentBalance || 0), 0);
+            
+            // NOVO: Saldo líquido total (todas as transações, todos os tempos)
+            const todasReceitas = appState.transactions.filter(t => t.type === 'income' && t.status !== 'cancelled').reduce((s, t) => s + Number(t.amount), 0);
+            const todasDespesas = appState.transactions.filter(t => t.type === 'expense' && t.status !== 'cancelled').reduce((s, t) => s + Number(t.amount), 0);
+            const saldoLiquidoTotal = todasReceitas - todasDespesas;
+            
             const recent = [...appState.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
             const todayExp = getTodayExpenses();
             const dailyLimit = getDailyLimit();
@@ -1463,10 +1469,15 @@
             if (dailyLimit > 0 && todayExp < dailyLimit) setTimeout(celebrate, 500);
             return `
             <div class="grid-cards">
-              <div class="card"><div class="card-label"><i data-lucide="wallet" style="width:14px;"></i> Saldo total</div><div class="card-value">${formatMoney(totalBalance)}</div></div>
+              <div class="card" style="grid-column: 1 / -1; border: 2px solid var(--accent);">
+                <div class="card-label"><i data-lucide="dollar-sign" style="width:14px;"></i> Saldo líquido total (todas as transações)</div>
+                <div class="card-value ${saldoLiquidoTotal >= 0 ? 'income-text' : 'expense-text'}" style="font-size: 2em;">${formatMoney(saldoLiquidoTotal)}</div>
+                <div style="font-size:0.75em;color:var(--text-secondary);">Receitas totais: ${formatMoney(todasReceitas)} · Despesas totais: ${formatMoney(todasDespesas)}</div>
+              </div>
+              <div class="card"><div class="card-label"><i data-lucide="wallet" style="width:14px;"></i> Saldo em contas</div><div class="card-value">${formatMoney(totalBalance)}</div></div>
               <div class="card"><div class="card-label"><i data-lucide="arrow-down-circle" style="width:14px;"></i> Receitas do mês</div><div class="card-value income-text">${formatMoney(totalIncome)}</div></div>
               <div class="card"><div class="card-label"><i data-lucide="arrow-up-circle" style="width:14px;"></i> Despesas do mês</div><div class="card-value expense-text">${formatMoney(totalExpense)}</div></div>
-              <div class="card"><div class="card-label"><i data-lucide="piggy-bank" style="width:14px;"></i> Economia</div><div class="card-value ${balance >= 0 ? 'income-text' : 'expense-text'}">${formatMoney(balance)}</div></div>
+              <div class="card"><div class="card-label"><i data-lucide="piggy-bank" style="width:14px;"></i> Economia do mês</div><div class="card-value ${balance >= 0 ? 'income-text' : 'expense-text'}">${formatMoney(balance)}</div></div>
               <div class="card"><div class="card-label"><i data-lucide="gauge" style="width:14px;"></i> Limite diário (${dayLabel})</div><div class="card-value">${formatMoney(todayExp)} ${dailyLimit > 0 ? '/ ' + formatMoney(dailyLimit) : ''}</div>${dailyLimit > 0 ? `<div class="progress-bar"><div class="fill ${limitPct > 100 ? 'red' : 'accent'}" style="width:${limitPct}%"></div></div>` : ''}</div>
               <div class="card"><div class="card-label"><i data-lucide="scale" style="width:14px;"></i> Saldo Diário</div><div class="card-value" style="color:${dailyBalanceColor}">${formatMoney(Math.abs(dailyBalance))}</div><div style="font-size:0.75em;color:var(--text-secondary);">${dailyBalanceLabel} · ${dailyLimit > 0 ? 'Limite: '+formatMoney(dailyLimit) : 'Sem limite definido'}</div></div>
               <div class="card"><div class="card-label"><i data-lucide="calendar" style="width:14px;"></i> Limite semanal (7 dias)</div><div class="card-value">${formatMoney(weeklyExp)} ${weeklyLimit > 0 ? '/ ' + formatMoney(weeklyLimit) : ''}</div>${weeklyLimit > 0 ? `<div class="progress-bar"><div class="fill ${weeklyPct > 100 ? 'red' : 'accent'}" style="width:${weeklyPct}%"></div></div>` : '<p style="font-size:0.7em;color:var(--text-secondary);">Defina limites diários</p>'}</div>
@@ -1960,14 +1971,28 @@
             plans.forEach(p => { const cat = p.category || 'Geral'; if (!groups[cat]) groups[cat] = []; groups[cat].push(p); });
             let totalPrevisto = 0, totalPago = 0;
             plans.forEach(p => { totalPrevisto += p.plannedAmount; totalPago += (p.spentAmount || 0); });
+            const saldoPlanejamento = totalPrevisto - totalPago;
+            const saldoColor = saldoPlanejamento >= 0 ? 'var(--income)' : 'var(--expense)';
+            
             let html = `
+            <!-- Mini Dashboard do Planejamento -->
+            <div class="grid-cards" style="margin-bottom:20px;">
+              <div class="card">
+                <div class="card-label"><i data-lucide="clipboard-list" style="width:14px;"></i> Previsto total</div>
+                <div class="card-value" style="font-size:1.4em;">${formatMoney(totalPrevisto)}</div>
+              </div>
+              <div class="card">
+                <div class="card-label"><i data-lucide="check-circle" style="width:14px;"></i> Pago total</div>
+                <div class="card-value" style="font-size:1.4em; color: var(--income);">${formatMoney(totalPago)}</div>
+              </div>
+              <div class="card" style="grid-column: 1 / -1; border: 2px solid var(--accent);">
+                <div class="card-label"><i data-lucide="dollar-sign" style="width:14px;"></i> Saldo do planejamento</div>
+                <div class="card-value" style="font-size:1.8em; color: ${saldoColor};">${formatMoney(saldoPlanejamento)}</div>
+                <div style="font-size:0.75em;color:var(--text-secondary);">Previsto ${formatMoney(totalPrevisto)} − Pago ${formatMoney(totalPago)}</div>
+              </div>
+            </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;">
               <button class="btn btn-primary" onclick="openPlanModal()"><i data-lucide="plus"></i> Novo Item</button>
-              <div style="font-size:0.9em;">
-                <span>Previsto: <strong>${formatMoney(totalPrevisto)}</strong></span> ·
-                <span>Pago: <strong>${formatMoney(totalPago)}</strong></span> ·
-                <span>Saldo: <strong style="color:${totalPrevisto - totalPago >= 0 ? 'var(--income)' : 'var(--expense)'}">${formatMoney(totalPrevisto - totalPago)}</strong></span>
-              </div>
             </div>`;
             if (plans.length === 0) { html += '<p style="color:var(--text-secondary);">Nenhum item planejado. Adicione itens para começar.</p>'; return html; }
             for (const [cat, items] of Object.entries(groups)) {
@@ -2093,7 +2118,7 @@
         window.addEventListener('resize', () => { if (!isMobile()) closeSidebar(); });
         lucide.createIcons();
         updateSidebarProfile();
-        console.log('🚀 FinanceHub v3.2 · Perfil+Backup · Pronto!');
+        console.log('🚀 FinanceHub v3.2 · Perfil+Backup + Saldo Líquido Total · Pronto!');
     </script>
 </body>
 </html>
