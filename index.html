@@ -701,6 +701,7 @@
         .toast.error { border-left: 3px solid var(--expense); }
         .toast.warning { border-left: 3px solid var(--warning); }
 
+        /* LOGIN */
         .login-container {
             display: flex;
             align-items: center;
@@ -723,7 +724,26 @@
             text-align: center;
         }
 
-        .login-box .login-logo { height: 72px; margin-bottom: 16px; }
+        .login-box .login-logo {
+            height: 120px;          /* aumentado para dar destaque */
+            margin-bottom: 16px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .login-box h1 {
+            font-size: 1.2em;       /* bem menor, deixando o logo como foco */
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .login-box p {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
 
         .login-box input {
             width: 100%;
@@ -854,69 +874,6 @@
             white-space: nowrap;
         }
 
-        .shopping-category {
-            margin-bottom: 20px;
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-            background: var(--card);
-            border: 1px solid var(--border);
-        }
-
-        .shopping-category-header {
-            padding: 12px 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--card-secondary);
-            font-weight: 600;
-            font-size: 0.85em;
-            user-select: none;
-            transition: background var(--transition);
-        }
-
-        .shopping-category-header:hover { background: rgba(109, 103, 228, 0.1); }
-
-        .shopping-category-header .arrow { transition: transform 0.3s ease; }
-
-        .shopping-category-header .arrow.open { transform: rotate(180deg); }
-
-        .shopping-items { padding: 4px 0; }
-
-        .shopping-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            cursor: pointer;
-            transition: all var(--transition);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .shopping-item:last-child { border-bottom: none; }
-
-        .shopping-item:hover { background: rgba(255, 255, 255, 0.02); }
-
-        .shopping-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
-
-        .shopping-item .item-name { flex: 1; font-size: 0.83em; transition: all var(--transition); }
-
-        .shopping-item.checked .item-name { text-decoration: line-through; opacity: 0.5; }
-
-        .shopping-item .delete-item-btn {
-            opacity: 0;
-            transition: opacity var(--transition);
-            cursor: pointer;
-            background: none;
-            border: none;
-            color: var(--expense);
-            padding: 4px;
-            display: flex;
-            align-items: center;
-        }
-
-        .shopping-item:hover .delete-item-btn { opacity: 1; }
-
         .plan-group { margin-bottom: 24px; }
 
         .plan-group-header {
@@ -1021,7 +978,6 @@
             .toast { bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 12px); right: 12px; left: 12px; max-width: none; border-radius: 16px; }
             .btn { min-height: 42px; }
             .btn-sm { min-height: 36px; }
-            .shopping-item:hover .delete-item-btn { opacity: 1; }
         }
 
         @media (max-width: 379px) {
@@ -1046,7 +1002,7 @@
         <div class="login-box">
             <img src="https://res.cloudinary.com/duu9q94cf/image/upload/quero-que-voc%C3%AA-crie-uma-logo--para-o-aplicativo-we_uzwrya.png" alt="FinanceHub Logo" class="login-logo">
             <h1>Finance<span style="color:var(--accent);">Hub</span></h1>
-            <p style="color:var(--text-secondary); margin-bottom:20px;">Gestão financeira inteligente</p>
+            <p>Gestão financeira inteligente</p>
             <input type="password" id="loginPin" placeholder="Senha de acesso" maxlength="6" autofocus inputmode="numeric" pattern="[0-9]*">
             <button class="btn btn-primary" onclick="doLogin()" style="width:100%;height:48px;justify-content:center;margin-top:8px;">Entrar</button>
             <p style="font-size:0.7em;color:var(--text-secondary);margin-top:16px;">Senha padrão: <strong style="color:var(--text);">1234</strong></p>
@@ -1077,7 +1033,7 @@
                 <a onclick="navigate('orcamento')" data-nav="orcamento"><i data-lucide="target"></i> Orçamento</a>
                 <a onclick="navigate('metas')" data-nav="metas"><i data-lucide="flag"></i> Metas</a>
                 <a onclick="navigate('calendario')" data-nav="calendario"><i data-lucide="calendar"></i> Calendário</a>
-                <a onclick="navigate('listaCompras')" data-nav="listaCompras"><i data-lucide="shopping-cart"></i> Lista de Compras</a>
+                <!-- Lista de Compras removida -->
                 <a onclick="navigate('relatorios')" data-nav="relatorios"><i data-lucide="bar-chart-3"></i> Relatórios</a>
                 <a onclick="navigate('configuracoes')" data-nav="configuracoes"><i data-lucide="settings"></i> Configurações</a>
             </nav>
@@ -1104,7 +1060,7 @@
             <button onclick="navigate('receitas')" data-bnav="receitas"><i data-lucide="arrow-down-circle"></i><span>Receitas</span></button>
             <button class="fab-btn" onclick="openQuickAddMenu()"><i data-lucide="plus"></i></button>
             <button onclick="navigate('despesas')" data-bnav="despesas"><i data-lucide="arrow-up-circle"></i><span>Despesas</span></button>
-            <button onclick="navigate('listaCompras')" data-bnav="listaCompras"><i data-lucide="shopping-cart"></i><span>Compras</span></button>
+            <!-- Botão Lista de Compras removido -->
         </nav>
     </div>
 
@@ -1118,6 +1074,7 @@
         // ==================== STATE ====================
         const DEFAULT_PIN = '1234';
 
+        // Dados da lista de compras mantidos (não afetam a interface)
         const DEFAULT_SHOPPING_LISTS = [{
             id: 'default_shopping',
             name: 'Compras do Mês',
@@ -1144,7 +1101,7 @@
             pin: DEFAULT_PIN,
             darkMode: true,
             userName: '',
-            userPhoto: null, // base64 da foto ou null
+            userPhoto: null,
             accounts: [],
             transactions: [],
             creditCards: [],
@@ -1200,7 +1157,6 @@
                 try {
                     const parsed = JSON.parse(saved);
                     appState = { ...appState, ...parsed };
-                    // Garante campos novos
                     if (appState.userName === undefined) appState.userName = '';
                     if (appState.userPhoto === undefined) appState.userPhoto = null;
                     if (!appState.customCategories) appState.customCategories = {
@@ -1349,7 +1305,6 @@
             if (currentSection === 'dashboard' || currentSection === 'relatorios') setTimeout(renderCharts, 300);
         }
 
-        // ==================== ATUALIZA PERFIL NA SIDEBAR ====================
         function updateSidebarProfile() {
             const nameEl = document.getElementById('sidebarName');
             const initialsEl = document.getElementById('sidebarInitials');
@@ -1389,7 +1344,7 @@
                 dashboard: 'Visão Geral', receitas: 'Receitas', despesas: 'Despesas', contas: 'Contas',
                 cartoes: 'Cartões', contasPagar: 'Contas a Pagar', transferencias: 'Transferências',
                 orcamento: 'Orçamento', metas: 'Metas', calendario: 'Calendário',
-                listaCompras: 'Lista de Compras', relatorios: 'Relatórios', configuracoes: 'Configurações',
+                relatorios: 'Relatórios', configuracoes: 'Configurações',
                 planejamento: 'Planejamento'
             };
             document.getElementById('pageTitle').textContent = titles[section] || section;
@@ -1416,7 +1371,6 @@
                 case 'orcamento': html = renderBudget(); break;
                 case 'metas': html = renderGoals(); break;
                 case 'calendario': html = renderCalendar(); break;
-                case 'listaCompras': html = renderShoppingLists(); break;
                 case 'relatorios': html = renderReports(); break;
                 case 'configuracoes': html = renderSettings(); break;
                 default: html = renderDashboard();
@@ -1427,7 +1381,7 @@
                 content.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                 content.style.opacity = '1';
                 content.style.transform = 'translateY(0)';
-                content.querySelectorAll('.card, .transaction-item, .shopping-category, .plan-item').forEach((el, i) => {
+                content.querySelectorAll('.card, .transaction-item, .plan-item').forEach((el, i) => {
                     el.classList.add('animate-in');
                     el.style.animationDelay = `${i * 0.02}s`;
                 });
@@ -1442,12 +1396,9 @@
             const totalExpense = monthTrans.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
             const balance = totalIncome - totalExpense;
             const totalBalance = appState.accounts.reduce((s, a) => s + Number(a.currentBalance || 0), 0);
-            
-            // NOVO: Saldo líquido total (todas as transações, todos os tempos)
             const todasReceitas = appState.transactions.filter(t => t.type === 'income' && t.status !== 'cancelled').reduce((s, t) => s + Number(t.amount), 0);
             const todasDespesas = appState.transactions.filter(t => t.type === 'expense' && t.status !== 'cancelled').reduce((s, t) => s + Number(t.amount), 0);
             const saldoLiquidoTotal = todasReceitas - todasDespesas;
-            
             const recent = [...appState.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
             const todayExp = getTodayExpenses();
             const dailyLimit = getDailyLimit();
@@ -1461,7 +1412,6 @@
             const expenseByCat = {};
             monthTrans.filter(t => t.type === 'expense').forEach(t => expenseByCat[t.category] = (expenseByCat[t.category] || 0) + Number(t.amount));
             const topCats = Object.entries(expenseByCat).sort((a, b) => b[1] - a[1]).slice(0, 6);
-
             const dailyBalance = dailyLimit - todayExp;
             const dailyBalanceColor = dailyBalance >= 0 ? 'var(--income)' : 'var(--expense)';
             const dailyBalanceLabel = dailyBalance >= 0 ? 'Disponível' : 'Estouro';
@@ -1557,108 +1507,9 @@
             }
         }
 
-        // ==================== LISTA DE COMPRAS ====================
-        function renderShoppingLists() {
-            if (!appState.shoppingLists || appState.shoppingLists.length === 0) {
-                appState.shoppingLists = JSON.parse(JSON.stringify(DEFAULT_SHOPPING_LISTS));
-                saveState();
-            }
-            const list = appState.shoppingLists[0];
-            let totalItems = 0, checkedItems = 0;
-            list.categories.forEach(cat => { totalItems += cat.items.length; checkedItems += (cat.checked || []).length; });
-            const progressPct = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
-            let html = `
-            <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-              <span style="font-weight:600;">Progresso: ${checkedItems}/${totalItems} itens (${progressPct}%)</span>
-              <div class="progress-bar" style="flex:1;min-width:100px;"><div class="fill accent" style="width:${progressPct}%"></div></div>
-              <button class="btn btn-outline btn-sm" onclick="resetShoppingList()"><i data-lucide="rotate-ccw" style="width:14px;"></i> Resetar</button>
-              <button class="btn btn-primary btn-sm" onclick="openAddShoppingItemModal()"><i data-lucide="plus" style="width:14px;"></i> Novo Item</button>
-            </div>`;
-            list.categories.forEach((cat, catIndex) => {
-                const checkedInCat = (cat.checked || []).length;
-                const totalInCat = cat.items.length;
-                html += `
-                <div class="shopping-category">
-                  <div class="shopping-category-header" onclick="toggleShoppingCategory(this)" data-cat="${catIndex}">
-                    <span>${cat.name} <span style="font-size:0.75em;color:var(--text-secondary);">(${checkedInCat}/${totalInCat})</span></span>
-                    <i data-lucide="chevron-down" class="arrow" style="width:16px;"></i>
-                  </div>
-                  <div class="shopping-items" id="shoppingCat-${catIndex}">`;
-                cat.items.forEach((item, itemIndex) => {
-                    const isChecked = (cat.checked || []).includes(itemIndex);
-                    html += `
-                    <div class="shopping-item${isChecked ? ' checked' : ''}" onclick="toggleShoppingItem(${catIndex}, ${itemIndex})">
-                      <input type="checkbox" ${isChecked ? 'checked' : ''} tabindex="-1">
-                      <span class="item-name">${item}</span>
-                      <button class="delete-item-btn" onclick="event.stopPropagation();deleteShoppingItem(${catIndex}, ${itemIndex})" title="Remover item">
-                        <i data-lucide="x" style="width:14px;"></i>
-                      </button>
-                    </div>`;
-                });
-                html += `</div></div>`;
-            });
-            return html;
-        }
-
-        function toggleShoppingCategory(header) {
-            const catIndex = header.getAttribute('data-cat');
-            const itemsDiv = document.getElementById('shoppingCat-' + catIndex);
-            const arrow = header.querySelector('.arrow');
-            if (itemsDiv.style.display === 'none') { itemsDiv.style.display = 'block'; arrow.classList.add('open'); }
-            else { itemsDiv.style.display = 'none'; arrow.classList.remove('open'); }
-        }
-
-        function toggleShoppingItem(catIndex, itemIndex) {
-            const list = appState.shoppingLists[0];
-            const cat = list.categories[catIndex];
-            if (!cat.checked) cat.checked = [];
-            const pos = cat.checked.indexOf(itemIndex);
-            if (pos >= 0) cat.checked.splice(pos, 1); else cat.checked.push(itemIndex);
-            saveState();
-            navigate('listaCompras');
-        }
-
-        function deleteShoppingItem(catIndex, itemIndex) {
-            const list = appState.shoppingLists[0];
-            const cat = list.categories[catIndex];
-            const itemName = cat.items[itemIndex];
-            confirmDialog(`Remover "${itemName}" da lista?`, () => {
-                cat.items.splice(itemIndex, 1);
-                if (!cat.checked) cat.checked = [];
-                cat.checked = cat.checked.filter(i => i !== itemIndex).map(i => i > itemIndex ? i - 1 : i);
-                saveState();
-                navigate('listaCompras');
-                showToast('Item removido', 'error');
-            });
-        }
-
-        function resetShoppingList() {
-            confirmDialog('Resetar toda a lista de compras?', () => {
-                appState.shoppingLists[0].categories.forEach(cat => { cat.checked = []; });
-                saveState();
-                navigate('listaCompras');
-                showToast('Lista resetada!', 'success');
-            });
-        }
-
-        function openAddShoppingItemModal() {
-            const list = appState.shoppingLists[0];
-            const catOptions = list.categories.map((cat, i) => `<option value="${i}">${cat.name}</option>`).join('');
-            const body = `
-            <div class="form-group"><label>Categoria</label><select id="addItemCat">${catOptions}</select></div>
-            <div class="form-group"><label>Nome do Item</label><input type="text" id="addItemName" placeholder="Ex: Creme de leite"></div>`;
-            openModal('Adicionar Item', body, () => {
-                const catIndex = parseInt(document.getElementById('addItemCat').value);
-                const itemName = document.getElementById('addItemName').value.trim();
-                if (!itemName) { showToast('Digite o nome do item', 'error'); return; }
-                list.categories[catIndex].items.push(itemName);
-                if (!list.categories[catIndex].checked) list.categories[catIndex].checked = [];
-                saveState();
-                closeModal();
-                navigate('listaCompras');
-                showToast('Item adicionado!', 'success');
-            });
-        }
+        // ==================== LISTA DE COMPRAS (mantida internamente, mas sem interface) ====================
+        // Todas as funções relacionadas à renderização da lista de compras foram removidas.
+        // Os dados permanecem em appState.shoppingLists para compatibilidade futura.
 
         // ==================== TRANSAÇÕES ====================
         function renderTransactionList(type) {
@@ -1814,7 +1665,7 @@
         function downloadBlob(content, filename, mime) { const b = new Blob([content], { type: mime }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = filename; a.click(); }
         function exportPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); const range = getMonthRange(); const monthTrans = appState.transactions.filter(t => t.date >= range.start && t.date <= range.end); const income = monthTrans.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0); const expense = monthTrans.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0); const totalBalance = appState.accounts.reduce((s, a) => s + Number(a.currentBalance || 0), 0); doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.text('FinanceHub - Extrato', 20, 20); doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 28); doc.line(20, 32, 190, 32); doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text('Resumo do Mês', 20, 42); doc.setFont('helvetica', 'normal'); doc.text(`Receitas: ${formatMoney(income)}`, 20, 50); doc.text(`Despesas: ${formatMoney(expense)}`, 20, 58); doc.text(`Saldo do mês: ${formatMoney(income - expense)}`, 20, 66); doc.text(`Saldo total em contas: ${formatMoney(totalBalance)}`, 20, 74); doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text('Últimas Movimentações', 20, 86); doc.setFont('helvetica', 'normal'); doc.setFontSize(9); const recent = [...appState.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10); let y = 94; recent.forEach(t => { const sign = t.type === 'income' ? '+' : '-'; doc.setTextColor(t.type === 'income' ? 0 : 200, t.type === 'income' ? 150 : 0, 0); doc.text(`${formatDate(t.date)} ${t.category}: ${sign}${formatMoney(t.amount)}`, 20, y); y += 6; }); doc.save('extrato_financehub.pdf'); showToast('PDF gerado!', 'success'); }
 
-        // ==================== CONFIGURAÇÕES (com perfil e backup) ====================
+        // ==================== CONFIGURAÇÕES ====================
         function renderSettings() {
             const l = appState.dailyLimits;
             const name = appState.userName || '';
@@ -1975,7 +1826,6 @@
             const saldoColor = saldoPlanejamento >= 0 ? 'var(--income)' : 'var(--expense)';
             
             let html = `
-            <!-- Mini Dashboard do Planejamento -->
             <div class="grid-cards" style="margin-bottom:20px;">
               <div class="card">
                 <div class="card-label"><i data-lucide="clipboard-list" style="width:14px;"></i> Previsto total</div>
@@ -2118,7 +1968,7 @@
         window.addEventListener('resize', () => { if (!isMobile()) closeSidebar(); });
         lucide.createIcons();
         updateSidebarProfile();
-        console.log('🚀 FinanceHub v3.2 · Perfil+Backup + Saldo Líquido Total · Pronto!');
+        console.log('🚀 FinanceHub v3.2 · Lista de Compras removida · Login com logo em destaque');
     </script>
 </body>
 </html>
