@@ -7,7 +7,7 @@
   "theme_color": "#453C67",
   "icons": [
     {
-      "src": "vulp.png",
+      "src": "vulp+.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
