@@ -725,7 +725,7 @@
         }
 
         .login-box .login-logo {
-            height: 120px;          /* aumentado para dar destaque */
+            height: 120px;
             margin-bottom: 16px;
             display: block;
             margin-left: auto;
@@ -733,7 +733,7 @@
         }
 
         .login-box h1 {
-            font-size: 1.2em;       /* bem menor, deixando o logo como foco */
+            font-size: 1.2em;
             margin-bottom: 8px;
             font-weight: 600;
             letter-spacing: -0.3px;
@@ -1033,7 +1033,8 @@
                 <a onclick="navigate('orcamento')" data-nav="orcamento"><i data-lucide="target"></i> Orçamento</a>
                 <a onclick="navigate('metas')" data-nav="metas"><i data-lucide="flag"></i> Metas</a>
                 <a onclick="navigate('calendario')" data-nav="calendario"><i data-lucide="calendar"></i> Calendário</a>
-                <!-- Lista de Compras removida -->
+                <!-- Nova aba Investimentos -->
+                <a onclick="navigate('investimentos')" data-nav="investimentos"><i data-lucide="trending-up"></i> Investimentos</a>
                 <a onclick="navigate('relatorios')" data-nav="relatorios"><i data-lucide="bar-chart-3"></i> Relatórios</a>
                 <a onclick="navigate('configuracoes')" data-nav="configuracoes"><i data-lucide="settings"></i> Configurações</a>
             </nav>
@@ -1060,7 +1061,7 @@
             <button onclick="navigate('receitas')" data-bnav="receitas"><i data-lucide="arrow-down-circle"></i><span>Receitas</span></button>
             <button class="fab-btn" onclick="openQuickAddMenu()"><i data-lucide="plus"></i></button>
             <button onclick="navigate('despesas')" data-bnav="despesas"><i data-lucide="arrow-up-circle"></i><span>Despesas</span></button>
-            <!-- Botão Lista de Compras removido -->
+            <button onclick="navigate('investimentos')" data-bnav="investimentos"><i data-lucide="trending-up"></i><span>Investir</span></button>
         </nav>
     </div>
 
@@ -1074,28 +1075,19 @@
         // ==================== STATE ====================
         const DEFAULT_PIN = '1234';
 
-        // Dados da lista de compras mantidos (não afetam a interface)
-        const DEFAULT_SHOPPING_LISTS = [{
-            id: 'default_shopping',
-            name: 'Compras do Mês',
-            createdAt: new Date().toISOString(),
-            categories: [
-                { name: '🥩 Carnes e Proteínas', items: ['Carne bovina', 'Frango', 'Peixe', 'Linguiça', 'Ovos', 'Presunto', 'Queijo', 'Atum em lata', 'Sardinha em lata'], checked: [] },
-                { name: '🥛 Laticínios', items: ['Leite', 'Iogurte', 'Manteiga', 'Margarina', 'Requeijão', 'Creme de leite', 'Leite condensado'], checked: [] },
-                { name: '🍞 Padaria', items: ['Pão francês', 'Pão de forma', 'Torradas', 'Biscoito salgado', 'Biscoito doce', 'Bolacha recheada'], checked: [] },
-                { name: '🌾 Grãos e Cereais', items: ['Arroz', 'Feijão', 'Macarrão', 'Farinha de trigo', 'Farinha de mandioca', 'Fubá', 'Aveia', 'Milho para pipoca'], checked: [] },
-                { name: '🥫 Enlatados e Conservas', items: ['Milho verde', 'Ervilha', 'Molho de tomate', 'Extrato de tomate', 'Azeitona', 'Palmito'], checked: [] },
-                { name: '🥬 Hortifruti', items: ['Alface', 'Tomate', 'Cebola', 'Alho', 'Batata', 'Cenoura', 'Pimentão', 'Pepino', 'Couve', 'Brócolis', 'Banana', 'Maçã', 'Laranja', 'Mamão', 'Limão', 'Abacaxi'], checked: [] },
-                { name: '🧂 Temperos e Condimentos', items: ['Sal', 'Açúcar', 'Café', 'Óleo de soja', 'Azeite', 'Vinagre', 'Pimenta-do-reino', 'Orégano', 'Colorau', 'Cominho', 'Caldo de carne', 'Caldo de galinha'], checked: [] },
-                { name: '🍬 Doces e Sobremesas', items: ['Chocolate', 'Gelatina', 'Pudim', 'Achocolatado', 'Doce de leite'], checked: [] },
-                { name: '🥤 Bebidas', items: ['Água mineral', 'Refrigerante', 'Suco', 'Chá', 'Café', 'Água de coco'], checked: [] },
-                { name: '🧼 Limpeza', items: ['Detergente', 'Sabão em pó', 'Sabão em barra', 'Amaciante', 'Água sanitária', 'Desinfetante', 'Limpador multiuso', 'Esponja', 'Palha de aço', 'Saco de lixo', 'Papel toalha'], checked: [] },
-                { name: '🧴 Higiene Pessoal', items: ['Papel higiênico', 'Creme dental', 'Escova de dentes', 'Sabonete', 'Shampoo', 'Condicionador', 'Desodorante', 'Fio dental', 'Cotonetes', 'Algodão', 'Absorvente', 'Aparelho de barbear'], checked: [] },
-                { name: '🐶 Pet', items: ['Ração', 'Petiscos', 'Areia para gato', 'Shampoo para pet'], checked: [] },
-                { name: '👶 Bebê', items: ['Fraldas', 'Lenço umedecido', 'Pomada para assaduras', 'Fórmula infantil'], checked: [] },
-                { name: '🏠 Utilidades Domésticas', items: ['Papel alumínio', 'Filme plástico', 'Guardanapo', 'Fósforos', 'Velas', 'Pilhas', 'Filtro de café'], checked: [] }
-            ]
-        }];
+        // Categorias e subcategorias de investimentos
+        const INVEST_CATEGORIES = {
+            "Renda Fixa": ["Reserva de Emergência", "Tesouro Direto", "Tesouro Selic", "Tesouro IPCA+", "Tesouro Prefixado", "CDB", "LCI", "LCA", "LC", "Debêntures", "Debêntures Incentivadas", "CRI", "CRA", "Poupança", "Fundos DI", "Fundos de Renda Fixa"],
+            "Renda Variável": ["Ações", "ETFs", "BDRs", "Fundos de Ações", "Fundos Multimercado", "Contratos Futuros", "Opções", "Minicontratos", "COE"],
+            "Fundos de Investimento": ["Fundos de Renda Fixa", "Fundos de Ações", "Fundos Cambiais", "Fundos Multimercado", "Fundos de Crédito Privado", "Fundos Imobiliários (FIIs)", "Fundos de Previdência", "Fundos Internacionais"],
+            "Investimentos Imobiliários": ["Compra de imóveis", "Terrenos", "Imóveis para aluguel", "Lajes corporativas", "Galpões logísticos", "Fundos Imobiliários (FIIs)"],
+            "Investimentos Internacionais": ["ETFs internacionais", "Ações estrangeiras", "REITs", "Fundos internacionais", "Bonds", "Contas remuneradas em dólar"],
+            "Câmbio": ["Dólar", "Euro", "Libra", "Franco Suíço", "Iene", "Outras moedas"],
+            "Criptomoedas": ["Bitcoin", "Ethereum", "Solana", "Stablecoins", "Tokens DeFi", "NFTs"],
+            "Previdência Privada": ["PGBL", "VGBL"],
+            "Commodities": ["Ouro", "Prata", "Petróleo", "Café", "Soja", "Milho", "Boi gordo"],
+            "Investimentos Alternativos": ["Startups", "Private Equity", "Venture Capital", "Obras de arte", "Vinhos", "Colecionáveis", "Participação em empresas"]
+        };
 
         let appState = {
             pin: DEFAULT_PIN,
@@ -1111,12 +1103,13 @@
             transfers: [],
             dailyLimits: { weekday: 0, saturday: 0, sunday: 0 },
             monthlyBudget: 0,
-            shoppingLists: JSON.parse(JSON.stringify(DEFAULT_SHOPPING_LISTS)),
+            shoppingLists: [], // não usado na interface, mantido para compatibilidade
             customCategories: {
                 expense: ['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Compras', 'Assinaturas', 'Pets', 'Impostos', 'Outros'],
                 income: ['Salário', 'Freelance', 'Comissão', 'Venda', 'Presente', 'Outros']
             },
             plans: [],
+            investments: [],
             sheetApiUrl: ''
         };
 
@@ -1145,7 +1138,8 @@
                         transfers: appState.transfers,
                         dailyLimits: appState.dailyLimits,
                         monthlyBudget: appState.monthlyBudget,
-                        plans: appState.plans
+                        plans: appState.plans,
+                        investments: appState.investments
                     })
                 }).catch(() => {});
             } catch (e) {}
@@ -1168,10 +1162,9 @@
                     if (!appState.goals) appState.goals = [];
                     if (!appState.dailyLimits) appState.dailyLimits = { weekday: 0, saturday: 0, sunday: 0 };
                     if (appState.monthlyBudget === undefined) appState.monthlyBudget = 0;
-                    if (!appState.shoppingLists || appState.shoppingLists.length === 0) {
-                        appState.shoppingLists = JSON.parse(JSON.stringify(DEFAULT_SHOPPING_LISTS));
-                    }
+                    if (!appState.shoppingLists) appState.shoppingLists = [];
                     if (!appState.plans) appState.plans = [];
+                    if (!appState.investments) appState.investments = [];
                     if (appState.sheetApiUrl === undefined) appState.sheetApiUrl = '';
 
                     appState.transactions.forEach(t => {
@@ -1179,10 +1172,6 @@
                             t.countInDailyLimit = t.hasOwnProperty('excludeFromDailyLimit') ? !t.excludeFromDailyLimit : true;
                         }
                         delete t.excludeFromDailyLimit;
-                    });
-
-                    appState.shoppingLists.forEach(list => {
-                        list.categories.forEach(cat => { if (!cat.checked) cat.checked = []; });
                     });
                 } catch (e) { console.warn("Erro ao carregar dados."); }
             }
@@ -1302,7 +1291,7 @@
             showToast('Tema atualizado');
             const meta = document.querySelector('meta[name="theme-color"]');
             if (meta) meta.content = appState.darkMode ? '#453C67' : '#F8FAFC';
-            if (currentSection === 'dashboard' || currentSection === 'relatorios') setTimeout(renderCharts, 300);
+            if (currentSection === 'dashboard' || currentSection === 'relatorios' || currentSection === 'investimentos') setTimeout(renderCharts, 300);
         }
 
         function updateSidebarProfile() {
@@ -1344,13 +1333,14 @@
                 dashboard: 'Visão Geral', receitas: 'Receitas', despesas: 'Despesas', contas: 'Contas',
                 cartoes: 'Cartões', contasPagar: 'Contas a Pagar', transferencias: 'Transferências',
                 orcamento: 'Orçamento', metas: 'Metas', calendario: 'Calendário',
-                relatorios: 'Relatórios', configuracoes: 'Configurações',
+                investimentos: 'Investimentos', relatorios: 'Relatórios', configuracoes: 'Configurações',
                 planejamento: 'Planejamento'
             };
             document.getElementById('pageTitle').textContent = titles[section] || section;
             renderSection(section);
             lucide.createIcons();
             if (section === 'dashboard' || section === 'relatorios') setTimeout(renderCharts, 400);
+            if (section === 'investimentos') setTimeout(renderInvestChart, 400);
             document.getElementById('contentArea').scrollTop = 0;
         }
 
@@ -1371,6 +1361,7 @@
                 case 'orcamento': html = renderBudget(); break;
                 case 'metas': html = renderGoals(); break;
                 case 'calendario': html = renderCalendar(); break;
+                case 'investimentos': html = renderInvestimentos(); break;
                 case 'relatorios': html = renderReports(); break;
                 case 'configuracoes': html = renderSettings(); break;
                 default: html = renderDashboard();
@@ -1507,9 +1498,165 @@
             }
         }
 
-        // ==================== LISTA DE COMPRAS (mantida internamente, mas sem interface) ====================
-        // Todas as funções relacionadas à renderização da lista de compras foram removidas.
-        // Os dados permanecem em appState.shoppingLists para compatibilidade futura.
+        // ==================== INVESTIMENTOS ====================
+        function renderInvestimentos() {
+            const investments = appState.investments || [];
+            let totalInvested = 0, totalCurrent = 0;
+            investments.forEach(inv => {
+                const q = inv.quantity || 0;
+                totalInvested += q * (inv.averagePrice || 0);
+                totalCurrent += q * (inv.currentPrice || 0);
+            });
+            const profit = totalCurrent - totalInvested;
+            const grouped = {};
+            const categoryTotals = {};
+            investments.forEach(inv => {
+                const cat = inv.category || 'Outros';
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(inv);
+                const q = inv.quantity || 0;
+                categoryTotals[cat] = (categoryTotals[cat] || 0) + q * (inv.currentPrice || 0);
+            });
+            let html = `
+            <div class="grid-cards" style="margin-bottom:20px;">
+              <div class="card"><div class="card-label"><i data-lucide="dollar-sign" style="width:14px;"></i> Total Investido</div><div class="card-value">${formatMoney(totalInvested)}</div></div>
+              <div class="card"><div class="card-label"><i data-lucide="trending-up" style="width:14px;"></i> Valor Atual</div><div class="card-value">${formatMoney(totalCurrent)}</div></div>
+              <div class="card"><div class="card-label"><i data-lucide="${profit >= 0 ? 'arrow-up-circle' : 'arrow-down-circle'}" style="width:14px;"></i> Lucro / Prejuízo</div><div class="card-value ${profit >= 0 ? 'income-text' : 'expense-text'}">${formatMoney(profit)}</div></div>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="openInvestmentModal()"><i data-lucide="plus"></i> Novo Investimento</button>
+            </div>
+            <div class="card" style="margin-bottom:20px;">
+              <div class="card-label">Distribuição por Categoria</div>
+              <div style="position:relative;height:250px;"><canvas id="investChart"></canvas></div>
+            </div>`;
+
+            for (const [cat, items] of Object.entries(grouped)) {
+                html += `<div class="plan-group"><div class="plan-group-header"><span>${cat}</span></div>`;
+                items.forEach(inv => {
+                    const q = inv.quantity || 0;
+                    const invested = q * (inv.averagePrice || 0);
+                    const current = q * (inv.currentPrice || 0);
+                    const itemProfit = current - invested;
+                    const profitColor = itemProfit >= 0 ? 'var(--income)' : 'var(--expense)';
+                    html += `
+                    <div class="plan-item">
+                        <div class="plan-desc" style="flex:2;">
+                            <strong>${inv.subcategory || '-'}</strong>
+                            <div style="font-size:0.7em;color:var(--text-secondary);">${inv.description || ''}</div>
+                        </div>
+                        <div style="font-size:0.8em;min-width:70px;">Qtd: ${q}</div>
+                        <div style="font-size:0.8em;min-width:90px;">Preço Médio: ${formatMoney(inv.averagePrice || 0)}</div>
+                        <div style="font-size:0.8em;min-width:90px;">Preço Atual: ${formatMoney(inv.currentPrice || 0)}</div>
+                        <div style="font-size:0.8em;min-width:90px;">Investido: ${formatMoney(invested)}</div>
+                        <div style="font-size:0.8em;min-width:90px;">Valor Atual: ${formatMoney(current)}</div>
+                        <div class="plan-result" style="color:${profitColor};min-width:80px;">${itemProfit >= 0 ? '+' : ''}${formatMoney(itemProfit)}</div>
+                        <button class="btn btn-outline btn-sm" onclick="editInvestment('${inv.id}')"><i data-lucide="pencil" style="width:14px;"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteInvestment('${inv.id}')"><i data-lucide="trash-2" style="width:14px;"></i></button>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            if (!investments.length) html += '<p style="color:var(--text-secondary);text-align:center;">Nenhum investimento cadastrado.</p>';
+            return html;
+        }
+
+        function renderInvestChart() {
+            const canvas = document.getElementById('investChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (canvas._chart) canvas._chart.destroy();
+            const investments = appState.investments || [];
+            const catTotals = {};
+            investments.forEach(inv => {
+                const cat = inv.category || 'Outros';
+                const q = inv.quantity || 0;
+                catTotals[cat] = (catTotals[cat] || 0) + q * (inv.currentPrice || 0);
+            });
+            const labels = Object.keys(catTotals);
+            const data = Object.values(catTotals);
+            canvas._chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#6D67E4','#46C2CB','#F2F7A1','#EF4444','#3B82F6','#8B5CF6','#F59E0B','#10B981','#EC4899','#6366F1'],
+                        borderColor: 'transparent'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#C4B8E0', font: { family: 'Inter', size: 11 }, usePointStyle: true, boxWidth: 8 } }
+                    }
+                }
+            });
+        }
+
+        function openInvestmentModal(editId = null) {
+            const existing = editId ? appState.investments.find(i => i.id === editId) : null;
+            const categoryOptions = Object.keys(INVEST_CATEGORIES).map(cat => `<option value="${cat}" ${existing && existing.category === cat ? 'selected' : ''}>${cat}</option>`).join('');
+            let subcategoryOptions = '';
+            const selectedCat = existing ? existing.category : Object.keys(INVEST_CATEGORIES)[0];
+            const subs = INVEST_CATEGORIES[selectedCat] || [];
+            subcategoryOptions = subs.map(s => `<option value="${s}" ${existing && existing.subcategory === s ? 'selected' : ''}>${s}</option>`).join('') + `<option value="Outros">Outros</option>`;
+
+            const body = `
+            <input type="hidden" id="invEditId" value="${editId||''}">
+            <div class="form-group"><label>Categoria</label><select id="invCategory" onchange="updateInvSubcategories()">${categoryOptions}</select></div>
+            <div class="form-group"><label>Subcategoria</label><select id="invSubcategory">${subcategoryOptions}</select></div>
+            <div class="form-group"><label>Descrição (opcional)</label><input type="text" id="invDescription" value="${existing?.description||''}"></div>
+            <div class="row-flex">
+              <div class="form-group"><label>Quantidade</label><input type="number" id="invQuantity" step="any" value="${existing?.quantity||''}"></div>
+              <div class="form-group"><label>Preço Médio (R$)</label><input type="number" id="invAvgPrice" step="0.01" value="${existing?.averagePrice||''}"></div>
+              <div class="form-group"><label>Preço Atual (R$)</label><input type="number" id="invCurrentPrice" step="0.01" value="${existing?.currentPrice||''}"></div>
+            </div>`;
+            openModal(existing ? 'Editar Investimento' : 'Novo Investimento', body, () => {
+                const q = parseFloat(document.getElementById('invQuantity').value) || 0;
+                const avg = parseFloat(document.getElementById('invAvgPrice').value) || 0;
+                const cur = parseFloat(document.getElementById('invCurrentPrice').value) || 0;
+                if (q <= 0) { showToast('Quantidade obrigatória', 'error'); return; }
+                const data = {
+                    id: editId || generateId(),
+                    category: document.getElementById('invCategory').value,
+                    subcategory: document.getElementById('invSubcategory').value,
+                    description: document.getElementById('invDescription').value,
+                    quantity: q,
+                    averagePrice: avg,
+                    currentPrice: cur
+                };
+                if (editId) {
+                    const idx = appState.investments.findIndex(i => i.id === editId);
+                    if (idx >= 0) appState.investments[idx] = data;
+                } else {
+                    appState.investments.push(data);
+                }
+                saveState();
+                closeModal();
+                navigate('investimentos');
+                showToast('Investimento salvo!', 'success');
+            });
+        }
+
+        function updateInvSubcategories() {
+            const cat = document.getElementById('invCategory').value;
+            const sel = document.getElementById('invSubcategory');
+            if (!sel) return;
+            const subs = INVEST_CATEGORIES[cat] || [];
+            sel.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('') + `<option value="Outros">Outros</option>`;
+        }
+
+        function editInvestment(id) { openInvestmentModal(id); }
+
+        function deleteInvestment(id) {
+            confirmDialog('Excluir investimento?', () => {
+                appState.investments = appState.investments.filter(i => i.id !== id);
+                saveState();
+                navigate('investimentos');
+            });
+        }
 
         // ==================== TRANSAÇÕES ====================
         function renderTransactionList(type) {
@@ -1968,7 +2115,7 @@
         window.addEventListener('resize', () => { if (!isMobile()) closeSidebar(); });
         lucide.createIcons();
         updateSidebarProfile();
-        console.log('🚀 FinanceHub v3.2 · Lista de Compras removida · Login com logo em destaque');
+        console.log('🚀 FinanceHub v3.2 · Investimentos adicionado');
     </script>
 </body>
 </html>
